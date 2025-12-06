@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import MainMenu from '@/components/MainMenu';
 import GameScreen from '@/components/GameScreen';
 import InfoScreens from '@/components/InfoScreens';
@@ -12,6 +12,24 @@ const Index = () => {
   const [selectedWord, setSelectedWord] = useState<string | null>(null);
   const [dialogStep, setDialogStep] = useState(0);
   const [score, setScore] = useState(0);
+  const [completedChapters, setCompletedChapters] = useState<number[]>([]);
+
+  useEffect(() => {
+    const savedProgress = localStorage.getItem('englishQuestProgress');
+    if (savedProgress) {
+      const { score: savedScore, completedChapters: savedCompleted } = JSON.parse(savedProgress);
+      setScore(savedScore || 0);
+      setCompletedChapters(savedCompleted || []);
+    }
+  }, []);
+
+  useEffect(() => {
+    const progress = {
+      score,
+      completedChapters,
+    };
+    localStorage.setItem('englishQuestProgress', JSON.stringify(progress));
+  }, [score, completedChapters]);
 
   const dictionary: Record<string, { translation: string; pronunciation: string }> = {
     'post office': { translation: 'почта', pronunciation: '[poʊst ˈɔfɪs]' },
@@ -28,6 +46,17 @@ const Index = () => {
     'help': { translation: 'помочь', pronunciation: '[help]' },
     'please': { translation: 'пожалуйста', pronunciation: '[pliːz]' },
     'where': { translation: 'где', pronunciation: '[wer]' },
+    'bus station': { translation: 'автостанция', pronunciation: '[bʌs ˈsteɪʃən]' },
+    'cinema': { translation: 'кинотеатр', pronunciation: '[ˈsɪnəmə]' },
+    'ticket': { translation: 'билет', pronunciation: '[ˈtɪkɪt]' },
+    'buy': { translation: 'купить', pronunciation: '[baɪ]' },
+    'friend': { translation: 'друг', pronunciation: '[frend]' },
+    'lost': { translation: 'потерял', pronunciation: '[lɔst]' },
+    'phone': { translation: 'телефон', pronunciation: '[foʊn]' },
+    'police': { translation: 'полиция', pronunciation: '[pəˈliːs]' },
+    'station': { translation: 'станция', pronunciation: '[ˈsteɪʃən]' },
+    'museum': { translation: 'музей', pronunciation: '[mjuˈziːəm]' },
+    'park': { translation: 'парк', pronunciation: '[pɑːrk]' },
   };
 
   const chapters = [
@@ -36,7 +65,7 @@ const Index = () => {
       title: 'Глава 1: Первое задание',
       description: 'Спроси дорогу у старика',
       difficulty: 'easy',
-      stars: 3,
+      stars: completedChapters.includes(1) ? 3 : 0,
       locked: false,
     },
     {
@@ -44,16 +73,16 @@ const Index = () => {
       title: 'Глава 2: Развитие',
       description: 'Найди автостанцию и кинотеатр',
       difficulty: 'medium',
-      stars: 0,
-      locked: score < 100,
+      stars: completedChapters.includes(2) ? 3 : 0,
+      locked: score < 50,
     },
     {
       id: 3,
       title: 'Глава 3: Потерянный телефон',
       description: 'Обратись в полицию',
       difficulty: 'hard',
-      stars: 0,
-      locked: score < 200,
+      stars: completedChapters.includes(3) ? 3 : 0,
+      locked: score < 150,
     },
   ];
 
@@ -74,6 +103,14 @@ const Index = () => {
   const handleOptionSelect = (option: string) => {
     setScore(score + 50);
     setDialogStep(1);
+  };
+
+  const handleCompleteChapter = (chapterId: number) => {
+    if (!completedChapters.includes(chapterId)) {
+      setCompletedChapters([...completedChapters, chapterId]);
+    }
+    setCurrentScreen('levels');
+    setDialogStep(0);
   };
 
   return (
@@ -104,6 +141,7 @@ const Index = () => {
           handleWordClick={handleWordClick}
           handleOptionSelect={handleOptionSelect}
           setDialogStep={setDialogStep}
+          handleCompleteChapter={handleCompleteChapter}
         />
       )}
 
